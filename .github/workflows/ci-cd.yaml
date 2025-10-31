@@ -21,14 +21,20 @@ jobs: # Define a job with many steps
       - name: Set up Docker Buildx # Set up Docker Buildx for building multi-platform images.
         uses: docker/setup-buildx-action@v2
 
+      - name: Normalize repo name to lowercase
+        id: vars
+        run: |
+          echo "repo_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+
       - name: Build and push Docker image # Build and push the Docker image to GHCR.
         uses: docker/build-push-action@v4
         with:
           context: . # Build the Docker image from the current directory.
           push: true
           tags: | # Tag the image with latest and commit SHA.
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ steps.vars.outputs.repo_lower }}:latest
+            ghcr.io/${{ steps.vars.outputs.repo_lower }}:${{ github.sha }}
 
       - name: Update GitOps repository
         shell: bash
@@ -48,9 +54,9 @@ jobs: # Define a job with many steps
           
           # Update deployment.yaml with new image tag
           if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|image: ghcr.io/${{ github.repository }}:.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" deployment.yaml
+            sed -i '' "s|image: ghcr.io/${{ steps.vars.outputs.repo_lower }}:.*|image: ghcr.io/${{ steps.vars.outputs.repo_lower }}:${{ github.sha }}|g" deployment.yaml
           else
-            sed -i "s|image: ghcr.io/${{ github.repository }}:.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" deployment.yaml
+            sed -i "s|image: ghcr.io/${{ steps.vars.outputs.repo_lower }}:.*|image: ghcr.io/${{ steps.vars.outputs.repo_lower }}:${{ github.sha }}|g" deployment.yaml
           fi
           
           # Commit changes
