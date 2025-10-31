@@ -43,7 +43,7 @@ jobs: # Define a job with many steps
           rm -rf gitops
           
           # Clone repository using HTTPS URL without token
-          git clone https://github.com/ZeroFrosty934/kubernetes-argocd-gitops.git gitops
+          git clone https://github.com/zerofrosty934/kubernetes-argocd-gitops.git gitops
           cd gitops
           
           # Update deployment.yaml with new image tag
@@ -60,4 +60,4 @@ jobs: # Define a job with many steps
           git commit -m "Update image to ${{ github.sha }}"
           
           # Push
-          git push -f https://${GIT_TOKEN}@github.com/ZeroFrosty934/kubernetes-argocd-gitops.git main
+          git push -f https://${GIT_TOKEN}@github.com/zerofrosty934/kubernetes-argocd-gitops.git main
