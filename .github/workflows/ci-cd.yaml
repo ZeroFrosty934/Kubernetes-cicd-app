@@ -1,36 +1,40 @@
 name: CI/CD Pipeline
-on:
+on: # Trigger on push or pull request to main branch
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-jobs:
+jobs: # Define a job with many steps
   build-and-push:
     runs-on: self-hosted
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+      - name: Checkout code # This step will clone the repository.
+        uses: actions/checkout@v3 
+
+      - name: Login to GitHub Container Registry # login to GHCR.
+        uses: docker/login-action@v2 # Using the built-in GitHub Actions for Docker login
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.CR_PAT }}
-      - name: Set up Docker Buildx
+          password: ${{ secrets.CR_PAT }} # Personal Access Token with write:packages scope
+
+      - name: Set up Docker Buildx # Set up Docker Buildx for building multi-platform images.
         uses: docker/setup-buildx-action@v2
-      - name: Build and push Docker image
+
+      - name: Build and push Docker image # Build and push the Docker image to GHCR.
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: . # Build the Docker image from the current directory.
           push: true
-          tags: |
+          tags: | # Tag the image with latest and commit SHA.
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+
       - name: Update GitOps repository
         shell: bash
         env:
-          GIT_TOKEN: ${{ secrets.GITOPS_PAT }}
-        run: |
+          GIT_TOKEN: ${{ secrets.GITOPS_PAT }} # Personal Access Token with repo scope
+        run: | # Bash script to update GitOps repo
           # Configure git credential store
           git config --global credential.helper store
           echo "https://${GIT_TOKEN}:x-oauth-basic@github.com" > ~/.git-credentials
@@ -39,9 +43,10 @@ jobs:
           rm -rf gitops
           
           # Clone repository using HTTPS URL without token
-          git clone https://github.com/rslim087a/grade-api-gitops.git gitops
+          git clone https://github.com/ZeroFrosty934/kubernetes-argocd-gitops.git gitops
           cd gitops
           
+          # Update deployment.yaml with new image tag
           if [[ "$OSTYPE" == "darwin"* ]]; then
             sed -i '' "s|image: ghcr.io/${{ github.repository }}:.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" deployment.yaml
           else
@@ -55,4 +60,4 @@ jobs:
           git commit -m "Update image to ${{ github.sha }}"
           
           # Push
-          git push -f https://${GIT_TOKEN}@github.com/rslim087a/grade-api-gitops.git main
+          git push -f https://${GIT_TOKEN}@github.com/ZeroFrosty934/kubernetes-argocd-gitops.git main
