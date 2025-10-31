@@ -21,18 +21,17 @@ jobs: # Define a job with many steps
       - name: Set up Docker Buildx # Set up Docker Buildx for building multi-platform images.
         uses: docker/setup-buildx-action@v2
 
-      - name: Normalize repo name to lowercase
+      - name: Normalize repo name to lowercase # Create a lowercase version of the repo name for tagging.
         id: vars
         run: |
           echo "repo_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
 
       - name: Build and push Docker image # Build and push the Docker image to GHCR.
         uses: docker/build-push-action@v4
         with:
           context: . # Build the Docker image from the current directory.
           push: true
-          tags: | # Tag the image with latest and commit SHA.
+          tags: | # Tag the image with 'latest' and the commit SHA.
             ghcr.io/${{ steps.vars.outputs.repo_lower }}:latest
             ghcr.io/${{ steps.vars.outputs.repo_lower }}:${{ github.sha }}
 
@@ -52,7 +51,7 @@ jobs: # Define a job with many steps
           git clone https://github.com/zerofrosty934/kubernetes-argocd-gitops.git gitops
           cd gitops
           
-          # Update deployment.yaml with new image tag
+          # Update deployment.yaml with new image tag.
           if [[ "$OSTYPE" == "darwin"* ]]; then
             sed -i '' "s|image: ghcr.io/${{ steps.vars.outputs.repo_lower }}:.*|image: ghcr.io/${{ steps.vars.outputs.repo_lower }}:${{ github.sha }}|g" deployment.yaml
           else
